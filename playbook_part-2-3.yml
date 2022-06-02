@@ -1,0 +1,49 @@
+---
+- name: LanWork
+  hosts: ubuntu
+  become: true
+      
+  tasks:
+
+   - name: Install required system packages
+     apt: name={{ item }} state=latest update_cache=yes
+     loop: [ 'git', 'python3-pip', 'virtualenv', 'python3-setuptools']
+    
+   - name: Add VScode GPG apt Key
+     apt_key:
+      url:  https://packages.microsoft.com/keys/microsoft.asc 
+      state: present
+    
+   - name: Add VScode Repository and install
+     apt_repository:
+      repo:  deb https://packages.microsoft.com/repos/vscode stable main
+      state: present
+    
+   - name: Update apt and install VScode
+     apt: 
+      update_cache: yes 
+      name: code 
+      state: latest
+
+   - name: Clone a github repository
+     ansible.builtin.git:
+        repo: https://github.com/warcan-max/python.git
+        dest: ~/app/python
+        clone: yes
+     become_user: test   
+
+   - name: Install specified python requirements
+     pip:
+        requirements: ~/app/python/requirements.txt
+     become_user: test      
+
+   - name: Install VScode extension and Start 
+     shell: |
+         code --install-extension ms-python.python
+         code --install-extension redhat.ansible 
+         export DISPLAY=:0 && code -g ~/app/python/
+     tags: 
+        - VScode
+     become_user: test   
+     
+     
